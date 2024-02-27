@@ -1,98 +1,118 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Reflection;
+
+
+public class Triangle
+{
+    public double side1;
+    public double side2; 
+    public double side3;
+    private string color;
+    internal bool isEquilateral;
+    internal bool isIsosceles;
+    internal bool isScalene;
+    protected double area; 
+    public Triangle(double side1, double side2, double side3, string clr)
+    {
+        this.side1 = side1;
+        this.side2 = side2;
+        this.side3 = side3;
+        color = clr;
+        if (IsValidTriangle(side1, side2, side3))
+        {
+            CalculateArea();
+            CheckType();
+        }
+        else
+        {
+            Console.WriteLine("Invalid triangle sides: cannot form a triangle.");
+        }
+    }
+
+    private bool IsValidTriangle(double a, double b, double c)
+    {
+        return a + b > c && a + c > b && b + c > a;
+    }
+    private void CalculateArea()
+    {
+        double s = (side1 + side2 + side3) / 2;
+        area = Math.Sqrt(s * (s - side1) * (s - side2) * (s - side3));
+    }
+    public double CalculatePerimeter()
+    {
+        return side1 + side2 + side3;
+    }
+    private void CheckType()
+    {
+        if (side1 == side2 && side2 == side3)
+            isEquilateral = true;
+        else if (side1 == side2 || side1 == side3 || side2 == side3)
+            isIsosceles = true; 
+        else
+            isScalene = true;
+    }
+    public void DisplayInfo()
+    {
+        Console.WriteLine($"Triangle with sides {side1}, {side2}, {side3}, color {color}, area: {area}, perimeter {CalculatePerimeter()}");
+        Console.WriteLine($"Type of triangle: {(isEquilateral ? "Equilateral" : (isIsosceles ? "Isosceles" : "Polylateral"))}");
+    }
+    public void SetField(string fieldName, object value)
+    {
+        //task 4
+        Type type = typeof(Triangle);
+        FieldInfo field = type.GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);//рефлексія
+
+        if (field != null)
+        {
+            field.SetValue(this, value);//рефлесія
+            Console.WriteLine($"Set {fieldName} to {value}");
+            CalculateArea();
+        }
+        else
+        {
+            Console.WriteLine($"Field {fieldName} not found.");
+        }
+    }
+}
 
 class Program
 {
-    static async Task Main()
+    static void Main()
     {
         // task1
-        Thread newThread1 = new Thread(TypingNumbers);
-        Thread newThread2 = new Thread(DisplayLoresIpsum);
-        newThread1.Start();
-        newThread2.Start();
-        for (int i = 1; i <= 5; i++)
-        {
-            Console.WriteLine($"Main Thread ID: {Thread.CurrentThread.ManagedThreadId}, Number: {i}");
-            Thread.Sleep(150);
-        }
-
+        Triangle triangle = new Triangle(3.0, 4.0, 5.0, "black");
+        triangle.DisplayInfo();
         //task2
-        await HelloAsync("Anna");
-
+        Type triangleType = typeof(Triangle);
+        Console.WriteLine("............ Type.............");
+        Console.WriteLine($"Full class name: {triangleType.FullName}");
+        Console.WriteLine($"Number of properties: {triangleType.GetFields().Length}");
+        Console.WriteLine($"Number of methods: {triangleType.GetMethods()}");
+        TypeInfo triangleTypeInfo = triangleType.GetTypeInfo();
+        Console.WriteLine("............ TypeInfo.............");
+        Console.WriteLine($"The class is abstract: {triangleTypeInfo.IsAbstract}");
+        Console.WriteLine($"The class is sealed: {triangleTypeInfo.IsSealed}");
+        Console.WriteLine($"The class is public: {triangleTypeInfo.IsPublic}");
+        //task3
+        Console.WriteLine("............ MemberInfo.............");
+        MemberInfo[] members = triangleType.GetMembers();
+        Console.WriteLine("Class members Triangle:");
+        foreach (MemberInfo member in members)
+        {
+            Console.WriteLine($"Name: {member.Name}, Type: {member.MemberType}");
+        }
+        //task4 
+        Console.WriteLine("............ FieldInfo.............");
+        triangle.SetField("side1", 30);
+        triangle.SetField("side2", 30);
+        triangle.SetField("side3", 10);
+        triangle.DisplayInfo();
+        //task5
+        MethodInfo methodInfo = triangleType.GetMethod("DisplayInfo");
+        methodInfo.Invoke(triangle, null);
         Console.ReadLine();
-    }
-
-    static void TypingNumbers()
-    {
-        for (int i = 1; i <= 5; i++)
-        {
-            Console.WriteLine($"Thread ID: {Thread.CurrentThread.ManagedThreadId}, Number: {i}");
-            Thread.Sleep(100);
-        }
-    }
-    static void DisplayLoresIpsum()
-    {
-        try
-        {
-            string text = File.ReadAllText("C:\\Users\\User\\source\\repos\\lab1\\LoremIpsum.txt");
-            string[] words = text.Split(new char[] { ' ', '\t', '\n', '\r' });
-            Console.WriteLine("enter the amount you want to withdraw");
-            int count = int.Parse(Console.ReadLine());
-            if (count <= words.Length)
-            {
-                Console.WriteLine($" {count} words file 'Lorem ipsum':");
-                for (int i = 0; i < count; i++)
-                {
-                    Console.Write($"{words[i]} ");
-                }
-                Console.WriteLine();
-            }
-            else
-            {
-                Console.WriteLine($"The entered number of all of them is too large ({words.Length}).");
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Exception open file: {ex.Message}");
-
-        }
 
     }
 
-    static async Task HelloAsync(string name)
-    {
-        Console.WriteLine("Task2");
-        Console.WriteLine("Доброго дня, " + name);
-        await ProcessTasksAsync();
-        Console.WriteLine("До побачення, " + name);
-    }
-    static async Task ProcessTasksAsync()
-    {
-        Console.WriteLine("Початок обробки асинхронних задач.");
-        var tasks = new List<Task<int>>();
-        for (int i = 1; i <= 2; i++)
-        {
-            tasks.Add(TaskAddAsync(i));
-        }
-        await Task.WhenAll(tasks);
-
-        Console.WriteLine("Обробка асинхронних задач завершена.");
-        foreach (var task in tasks)
-        {
-            Console.WriteLine($"Результат обробки: {task.Result}");
-        }
-    }
-    static async Task<int> TaskAddAsync(int taskId)
-    {
-        Console.WriteLine($"Початок обробки task {taskId}.");
-        await Task.Delay(taskId * 1000);
-        Console.WriteLine($"Завершення обробки task {taskId}.");
-        return taskId + 100;
-    }
 
 }
