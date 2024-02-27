@@ -18,21 +18,12 @@ public class Triangle
         this.side2 = side2;
         this.side3 = side3;
         color = clr;
-        if (IsValidTriangle(side1, side2, side3))
-        {
+      
             CalculateArea();
             CheckType();
-        }
-        else
-        {
-            Console.WriteLine("Invalid triangle sides: cannot form a triangle.");
-        }
+       
     }
 
-    private bool IsValidTriangle(double a, double b, double c)
-    {
-        return a + b > c && a + c > b && b + c > a;
-    }
     private void CalculateArea()
     {
         double s = (side1 + side2 + side3) / 2;
@@ -109,6 +100,11 @@ class Program
         triangle.DisplayInfo();
         //task5
         MethodInfo methodInfo = triangleType.GetMethod("DisplayInfo");
+        MethodInfo[] privateMethods = triangleType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance);
+        foreach (MethodInfo method in privateMethods)
+        {
+            Console.WriteLine($"Private method name: {method.Name}");
+        }
         methodInfo.Invoke(triangle, null);
         Console.ReadLine();
 
